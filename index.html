@@ -950,7 +950,9 @@
         <label class="check-row"><input type="checkbox" name="Предпочтения" value="Джин">Джин</label>
         <label class="check-row"><input type="checkbox" name="Предпочтения" value="Ром">Ром</label>
         <label class="check-row"><input type="checkbox" name="Предпочтения" value="Не пью алкоголь">Не пью алкоголь</label>
+        <label class="check-row"><input type="checkbox" id="pref-other-cb" name="Предпочтения" value="Другое">Другое</label>
       </div>
+      <input type="text" id="rsvp-other" name="Другое" placeholder="Укажите свой вариант" style="display:none;margin-top:4px;margin-bottom:18px">
 
       <button type="submit" class="rsvp-submit">Отправить</button>
     </form>
@@ -1020,6 +1022,17 @@
     if (e.key === 'Escape' && rsvpOverlay.classList.contains('open')) closeRsvp();
   });
 
+  // Показать/скрыть поле «Другое»
+  var prefOtherCb = document.getElementById('pref-other-cb');
+  var rsvpOther = document.getElementById('rsvp-other');
+  if (prefOtherCb && rsvpOther) {
+    prefOtherCb.addEventListener('change', function() {
+      rsvpOther.style.display = prefOtherCb.checked ? 'block' : 'none';
+      if (!prefOtherCb.checked) rsvpOther.value = '';
+      else rsvpOther.focus();
+    });
+  }
+
   // RSVP form submit → Google Apps Script
   var rsvpForm = document.getElementById('rsvpForm');
   var GAS_URL = 'https://script.google.com/macros/s/AKfycbw5WOK0kjn-HEFuXqcvZgwbEQ-qjH2RHjhlBDQIcEfvAdIzdqfSgfydsF2Std_HAqGkaw/exec';
@@ -1031,7 +1044,10 @@
       btn.textContent = 'Отправка…';
 
       var formData = new FormData(rsvpForm);
-      var prefs = formData.getAll('Предпочтения');
+      var prefs = formData.getAll('Предпочтения').filter(function(v) { return v !== 'Другое'; });
+      var otherText = (formData.get('Другое') || '').toString().trim();
+      if (otherText) prefs.push('Другое: ' + otherText);
+      else if (formData.getAll('Предпочтения').indexOf('Другое') !== -1) prefs.push('Другое');
 
       var payload = {
         name: (formData.get('Имя и фамилия') || '').toString().trim(),
