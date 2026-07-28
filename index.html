@@ -921,10 +921,7 @@
     <p class="rsvp-note" id="rsvpNote">Просим подтвердить своё присутствие</p>
     <p class="rsvp-deadline">До 30 июля</p>
 
-    <form id="rsvpForm" class="rsvp-form" action="https://formsubmit.co/katrin.aaa1003@gmail.com" method="POST">
-      <input type="hidden" name="_subject" value="Подтверждение присутствия — свадьба Владислава и Екатерины">
-      <input type="hidden" name="_template" value="table">
-      <input type="hidden" name="_captcha" value="false">
+    <form id="rsvpForm" class="rsvp-form" action="https://script.google.com/macros/s/AKfycbw5WOK0kjn-HEFuXqcvZgwbEQ-qjH2RHjhlBDQIcEfvAdIzdqfSgfydsF2Std_HAqGkaw/exec" method="POST">
       <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
 
       <label class="field-label" for="rsvp-name">Имя и фамилия</label>
@@ -1023,8 +1020,9 @@
     if (e.key === 'Escape' && rsvpOverlay.classList.contains('open')) closeRsvp();
   });
 
-  // RSVP form submit
+  // RSVP form submit → Google Apps Script
   var rsvpForm = document.getElementById('rsvpForm');
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbw5WOK0kjn-HEFuXqcvZgwbEQ-qjH2RHjhlBDQIcEfvAdIzdqfSgfydsF2Std_HAqGkaw/exec';
   if (rsvpForm) {
     rsvpForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -1033,21 +1031,21 @@
       btn.textContent = 'Отправка…';
 
       var formData = new FormData(rsvpForm);
-      var payload = {};
-      formData.forEach(function(value, key) {
-        if (payload[key] !== undefined) {
-          payload[key] = payload[key] + ', ' + value;
-        } else {
-          payload[key] = value;
-        }
-      });
+      var prefs = formData.getAll('Предпочтения');
 
-      fetch('https://formsubmit.co/ajax/katrin.aaa1003@gmail.com', {
+      var payload = {
+        name: (formData.get('Имя и фамилия') || '').toString().trim(),
+        presence: (formData.get('Присутствие') || '').toString().trim(),
+        plusone: (formData.get('Спутник/спутница') || '').toString().trim(),
+        preferences: prefs.join(', ')
+      };
+
+      fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       })
-      .then(function(r) { return r.json(); })
+      .then(function(r) { return r.json().catch(function() { return { result: 'ok' }; }); })
       .then(function() {
         rsvpForm.hidden = true;
         document.getElementById('rsvpThanks').hidden = false;
